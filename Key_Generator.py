@@ -1,54 +1,75 @@
+import tkinter as tk
+from tkinter import messagebox
 import secrets
 
 passwords = {}
 
-while True:
-    print("Welcome to the Password Generator")
-    print("1 - Generate Password")
-    print("2 - Delete Password")
-    print("3 - List Passwords")
-    print("4 - Quit")
+def generate_password():
+    try:
+        length = int(entry_length.get())
+        name = entry_name.get().strip()
+        password = (secrets.token_urlsafe(length)).strip()
 
-    option = int(input("Choose an option: "))
-
-    # Generate Password
-    if option == 1:
-        lenght = int(input("Number of characters: "))
-        name = input("Name: ").strip()
-        password = (secrets.token_urlsafe(lenght)).strip()
-
-        if lenght == 0 or name == "":
-            print("⚠️ Empty field! Name is required and password cannot be 0 characters long.")
+        if length == 0 or name == "":
+            messagebox.showwarning("Erro", "⚠️ Nome é obrigatório e a senha não pode ter 0 caracteres.")
         elif name in passwords:
-            print("⚠️ A password with that name already exists.")
+            messagebox.showwarning("Erro", "⚠️ Já existe uma senha com esse nome.")
         else:
             passwords[name] = password
-            print("Passaword and Name Saved")
-            print(passwords)
+            messagebox.showinfo("Sucesso", f"Senha salva!\n\nName: {name}\nPassword: {password}")
+            entry_name.delete(0, tk.END)
+            entry_length.delete(0, tk.END)
+    except ValueError:
+        messagebox.showerror("Erro", "Digite um número válido para o tamanho da senha.")
 
-    # Delete Password
-    elif option == 2:
-        name = input("Enter the name of the password you want to delete: ").strip()
-        if name in passwords:
-            del passwords[name]
-            print("✅ Password deleted successfully!")
-            print(passwords)
-        else:
-            print("⚠️ Password name does not exist.")
-    
-    # List Passwords
-    elif option == 3:
-        if len(passwords) == 0:
-            print("⚠️ Empty password list")
-        else:
-            print("\n📒 Saved Passwords:")
-            for name, password in passwords.items():
-                print(f"Name: {name} | Password: {password}")
-
-    # Quit
-    elif option == 4:
-        print("👋Exiting the Password Generator...")
-        break
-
+def delete_password():
+    name = entry_name.get().strip()
+    if name in passwords:
+        del passwords[name]
+        messagebox.showinfo("Sucesso", f"Senha de '{name}' excluída com sucesso!")
+        entry_name.delete(0, tk.END)
     else:
-        print("❌Invalid Option")
+        messagebox.showwarning("Erro", "⚠️ Esse nome não existe.")
+
+def list_passwords():
+    if not passwords:
+        messagebox.showinfo("📒 Senhas Salvas", "⚠️ Nenhuma senha cadastrada.")
+        return
+    
+    # cria nova janela
+    top = tk.Toplevel(root)
+    top.title("📒 Senhas Salvas")
+    top.geometry("400x300")
+    
+    text_area = tk.Text(top, wrap="word")
+    text_area.pack(expand=True, fill="both")
+
+    # insere senhas
+    for name, pwd in passwords.items():
+        text_area.insert(tk.END, f"Name: {name} | Password: {pwd}\n")
+
+    # deixa somente leitura (mas ainda dá pra copiar com Ctrl+C)
+    text_area.config(state="disabled")
+
+def quit_app():
+    root.destroy()
+
+# --- Janela Principal ---
+root = tk.Tk()
+root.title("Password Manager")
+root.geometry("400x300")
+
+tk.Label(root, text="Nome:").pack()
+entry_name = tk.Entry(root, width=40)
+entry_name.pack()
+
+tk.Label(root, text="Número de caracteres:").pack()
+entry_length = tk.Entry(root, width=10)
+entry_length.pack()
+
+tk.Button(root, text="Gerar Senha", command=generate_password).pack(pady=5)
+tk.Button(root, text="Excluir Senha", command=delete_password).pack(pady=5)
+tk.Button(root, text="Listar Senhas", command=list_passwords).pack(pady=5)
+tk.Button(root, text="Sair", command=quit_app).pack(pady=5)
+
+root.mainloop()
